@@ -53,8 +53,8 @@ SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) 
  -----------------------
  
  
- 
-SELECT TO_TIMESTAMP(VDATE), VHOUR, VMIN, VSEC, add_seconds(TO_TIMESTAMP(VDATE),  3600 * VHOUR + 60 * VMIN + VSEC) AS EVENTTIMESTAMP
+SELECT TO_TIMESTAMP(VDATE), VHOUR, VMIN, VSEC, add_seconds(TO_TIMESTAMP(VDATE),  3600 * VHOUR + 60 * VMIN + VSEC) AS EVENTTIMESTAMP,
+     CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0)) || SUBSTRING (LPAD(TO_CHAR(round(rand() * 100,0)),2,'0'),0,2) || ' ' || CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0))  AS VNP
 FROM 
 -- DATE	
 (
@@ -81,3 +81,5 @@ SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) 
 )
 
 order by VDATE, VHOUR, VMIN, VSEC
+
+
