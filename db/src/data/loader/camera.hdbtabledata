@@ -1,0 +1,45 @@
+{
+    "format_version": 1,
+    "imports": [
+        {
+            "target_table": "cameras.camera",
+            "source_data": {
+                "data_type": "CSV",
+                "file_name": "camera.csv",
+                "has_header": true
+            }
+        },
+        {
+            "target_table": "cameras.cameraAccidentHist",
+            "source_data": {
+                "data_type": "CSV",
+                "file_name": "cameraAccidentHist.csv",
+                "has_header": true
+            }
+        },
+        {
+            "target_table": "cameras.vehicleMake",
+            "source_data": {
+                "data_type": "CSV",
+                "file_name": "vehicleMake.csv",
+                "has_header": true
+            }
+        },
+        {
+            "target_table": "cameras.vehicleColor",
+            "source_data": {
+                "data_type": "CSV",
+                "file_name": "vehicleColor.csv",
+                "has_header": true
+            }
+        },
+        {
+            "target_table": "cameras.vehicleType",
+            "source_data": {
+                "data_type": "CSV",
+                "file_name": "vehicleType.csv",
+                "has_header": true
+            }
+        }
+    ]
+}
