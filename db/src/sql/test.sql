@@ -222,4 +222,104 @@ order by VDATE, VHOUR, VMIN, VSEC
  ORDER BY RECORD_ID( "cameras.camera") ) AS PARTB
  WHERE PARTA.RRID = PARTB.RID
 
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+-------------------- WORKING TEST TABLE
+---------------------------------------------------------------------
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+--SELECT COUNT(*) FROM (   -- 1 hr is 3.34 million  (686 cars *  5000 events per hour)
+DROP TABLE  TESTCREATE;
+CREATE COLUMN TABLE TESTCREATE AS (
+SELECT "CameraHeadRef", EVENTTIMESTAMP,  VNP , "SpeedLimitStd" as "SpeedLimit", "SpeedDelta", "SpeedLimitStd" + "SpeedDelta" as "Speed" --,  COLORRAND,TYPERAND,MAKERAND 
+       ,"ColorID", "TypeID" , "MakeID"
+FROM (
+SELECT "CameraHeadRef", EVENTTIMESTAMP,  VNP , "SpeedLimitStd",  CASE WHEN SPEEDRAND < "HISTFREQ" THEN round(RAND()*30,0) ELSE ROUND(RAND()*-10,0) END as "SpeedDelta" 
+       ,COLORRAND,TYPERAND,MAKERAND
+    FROM ( 
+
+SELECT "CameraHeadRef", EVENTTIMESTAMP --,  VNP    
+     -- aa-zz  (25)  PRODUCING TO MANY COMBINATIONS  - reduce to 10
+     ,CHAR(65 + round(rand() * 10,0)) || CHAR(65 + round(rand() * 10,0)) || SUBSTRING (LPAD(TO_CHAR(round(rand() * 100,0)),2,'0'),0,2) || ' ' || CHAR(65 + round(rand() * 10,0)) || CHAR(65 + round(rand() * 10,0)) || CHAR(65 + round(rand() * 0,0))  AS VNP
+       , "SpeedLimitStd", "HISTFREQ", RAND() as SPEEDRAND , 
+       ROUND(RAND(),2) as COLORRAND, ROUND(RAND(),4) as TYPERAND, ROUND(RAND()*76,0) as MAKERAND --, 'Light Vehicle' as "VTYPE"
+
+FROM (
+SELECT TO_TIMESTAMP(VDATE), VHOUR, VMIN, VSEC, add_seconds(TO_TIMESTAMP(VDATE),  3600 * VHOUR + 60 * VMIN + VSEC) AS EVENTTIMESTAMP
+    -- ,CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0)) || SUBSTRING (LPAD(TO_CHAR(round(rand() * 100,0)),2,'0'),0,2) || ' ' || CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0))  AS VNP
+FROM 
+-- DATE	
+(
+ SELECT  DISTINCT V AS VDATE FROM (
+  SELECT ADD_DAYS('2019-01-01', round(Rand() * 0 * 0 * 0, 0)) AS V from OBJECTS   limit 10000)
+WHERE V <= '2026-01-01'  
+ order by V),
+(
+SELECT HOUR(VTIME) as VHOUR
+from (
+---  HOURS	  24 = rand()*23
+SELECT  DISTINCT V AS VTIME FROM (
+SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), 3600 * round(rand()*0,0) ) AS V from OBJECTS  limit 5000)
+-- order by V
+ order by V
+ )
+) ,
+(
+-- 1 HOUR GEN
+SELECT MINUTE(VTIME) AS VMIN, SECOND(VTIME) as VSEC
+from (
+SELECT  top 5000 V AS VTIME FROM (
+SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) ) AS V from OBJECTS, OBJECTS   limit 50000)
+-- order by V
+ )
+)  
+
+order by VDATE, VHOUR, VMIN, VSEC
+) AS PARTA,
+( SELECT TOP 500 "cameras.camera"."CameraHeadRef", "SpeedLimitStd" , FREQ as "HISTFREQ"
+ from "cameras.camera" 
+ INNER JOIN V_HIST
+ ON "cameras.camera"."CameraHeadRef" = V_HIST."CameraHeadRef"
+ where "CamType" = 'Speed Camera' 
+) AS CAM 
+)
+) AS EVENT   -- Excludiing Vehcile description
+INNER JOIN V_COLOR
+ON EVENT.COLORRAND =  V_COLOR.COLORSEQ
+INNER JOIN V_MAKE
+ON EVENT.MAKERAND =  V_MAKE.MAKESEQ
+INNER JOIN V_TYPE
+ON EVENT.TYPERAND =  V_TYPE.TYPESEQ
+
+) -- CREATE
+;
+
+
+SELECT COUNT(*) FROM  TESTCREATE;
+SELECT * FROM TESTCREATE ORDER BY "CameraHeadRef", EVENTTIMESTAMP ;
+
+--SELECT * FROM "cameras.camera" WHERE "CameraHeadRef" like '%700701%'
+
+SELECT count(DISTINCT("VNP")) FROM  TESTCREATE;
+
+SELECT "ColorID", "TypeID" , "MakeID", COUNT(*) FROM TESTCREATE
+GROUP BY "ColorID", "TypeID" , "MakeID"
+
+
+
+SELECT SP, TOT, SP/TOT , SP / 500  FROM (
+select
+(SELECT count(*)  from TESTCREATE WHERE "SpeedDelta" > 0) as SP,
+(SELECT count(*)  from TESTCREATE) AS TOT
+FROM DUMMY
+)
+;
+
+-- 1 hour 28Mb
+SELECT MEMORY_SIZE_IN_TOTAL / 1024 / 1024 as Mb , * FROM M_CS_TABLES WHERE TABLE_NAME like '%TESTCREATE%'
+
+SELECT MEMORY_SIZE_IN_TOTAL / 1024 / 1024 as Mb , * FROM M_CS_COLUMNS WHERE TABLE_NAME like '%TESTCREATE%'
+
+
+
 

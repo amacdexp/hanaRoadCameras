@@ -62,7 +62,7 @@ SELECT count(*) FROM V_TYPE;
 
 ------  MAKE
 DROP VIEW V_MAKE;
-CREATE VIEW  V_MAKE AS ( SELECT ROW_NUMBER() over () as "SEQ", "MakeID" FROM "cameras.vehicleMake" );
+CREATE VIEW  V_MAKE AS ( SELECT ROW_NUMBER() over () as "MAKESEQ", "MakeID" FROM "cameras.vehicleMake" );
 
 SELECT * FROM V_MAKE;
 
