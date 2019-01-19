@@ -1,9 +1,13 @@
 ---- HIST
 DROP VIEW V_HIST;
 CREATE VIEW  V_HIST AS (
-SELECT  "CameraHeadRef", "Occurence" / sum("Occurence") OVER ()  AS FREQ 
-FROM "cameras.cameraAccidentHist" WHERE "Severity" <> 'Fatal' and "Severity" <> 'Serious' and "Severity" = 'Slight'
-ORDER BY "CameraHeadRef"
+SELECT  "cameras.cameraAccidentHist"."CameraHeadRef", "Occurence" / sum("Occurence") OVER ()  AS FREQ 
+FROM "cameras.cameraAccidentHist" 
+INNER JOIN "cameras.camera"
+ON "cameras.cameraAccidentHist"."CameraHeadRef" = "cameras.camera"."CameraHeadRef"
+WHERE "Severity" <> 'Fatal' and "Severity" <> 'Serious' and "Severity" = 'Slight'
+and "CamType" = 'Speed Camera' 
+ORDER BY  "cameras.cameraAccidentHist"."CameraHeadRef"
 	
 )
 ;

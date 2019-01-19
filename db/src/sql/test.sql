@@ -154,6 +154,11 @@ SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) 
  
  
 ------------------ MAIN GEN SQL
+SELECT "CameraHeadRef", EVENTTIMESTAMP,  VNP , "SpeedLimitStd" as "SpeedLimit", "SpeedDelta", "SpeedLimitStd" + "SpeedDelta" as "Speed",  COLORRAND,TYPERAND,MAKERAND FROM (
+SELECT "CameraHeadRef", EVENTTIMESTAMP,  VNP , "SpeedLimitStd",  CASE WHEN SPEEDRAND < "HISTFREQ" THEN round(RAND()*30,0) ELSE ROUND(RAND()*-10,0) END as "SpeedDelta" 
+       ,COLORRAND,TYPERAND,MAKERAND
+    FROM ( 
+
 SELECT "CameraHeadRef", EVENTTIMESTAMP,  VNP , "SpeedLimitStd", "HISTFREQ", RAND() as SPEEDRAND , 
        ROUND(RAND(),2) as COLORRAND, ROUND(RAND(),4) as TYPERAND, ROUND(RAND()*76,0) as MAKERAND --, 'Light Vehicle' as "VTYPE"
 
@@ -170,13 +175,15 @@ WHERE V <= '2026-01-01'
 (
 SELECT HOUR(VTIME) as VHOUR
 from (
+---  HOURS	  24 = rand()*23
 SELECT  DISTINCT V AS VTIME FROM (
-SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), 3600 * round(rand()*23,0) ) AS V from OBJECTS  limit 5000)
+SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), 3600 * round(rand()*0,0) ) AS V from OBJECTS  limit 5000)
 -- order by V
  order by V
  )
 ) ,
 (
+-- 1 HOUR GEN
 SELECT MINUTE(VTIME) AS VMIN, SECOND(VTIME) as VSEC
 from (
 SELECT  top 5000 V AS VTIME FROM (
@@ -187,12 +194,14 @@ SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) 
 
 order by VDATE, VHOUR, VMIN, VSEC
 ) AS PARTA,
-( SELECT "cameras.camera"."CameraHeadRef", "SpeedLimitStd" , FREQ as "HISTFREQ"
+( SELECT TOP 500 "cameras.camera"."CameraHeadRef", "SpeedLimitStd" , FREQ as "HISTFREQ"
  from "cameras.camera" 
  INNER JOIN V_HIST
  ON "cameras.camera"."CameraHeadRef" = V_HIST."CameraHeadRef"
  where "CamType" = 'Speed Camera' 
 ) AS CAM 
+)
+)
 
 
 
