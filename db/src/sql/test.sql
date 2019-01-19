@@ -3,6 +3,32 @@ select count(*) from "cameras.camera" where "CamType" = 'Speed Camera'
 SELECT "CameraHeadRef", "SpeedLimitStd" 
  from "cameras.camera" where "CamType" = 'Speed Camera'
 
+SELECT *
+FROM "cameras.vehicleColor","cameras.vehicleMake","cameras.vehicleType"
+
+SELECT --* 
+      MIN(ZZ), MAX(ZZ), MIN(FREQ), MAX(FREQ) FROM (
+SELECT ZZ , FREQ, CASE WHEN ZZ < FREQ THEN round(RAND()*30,0) ELSE RAND()*-10 END as DELTA, SPEED
+from (
+SELECT * , "Occurence" / sum("Occurence") OVER ()  AS FREQ , RAND() AS ZZ, 60 as SPEED
+FROM "cameras.cameraAccidentHist" WHERE "Severity" <> 'Fatal' and "Severity" <> 'Serious' and "Severity" = 'Slight'
+)
+)
+--WHERE DELTA > 0
+;
+
+
+---- HIST
+DROP VIEW V_HIST;
+CREATE VIEW  V_HIST AS (
+SELECT  "CameraHeadRef", "Occurence" / sum("Occurence") OVER ()  AS FREQ 
+FROM "cameras.cameraAccidentHist" WHERE "Severity" <> 'Fatal' and "Severity" <> 'Serious' and "Severity" = 'Slight'
+ORDER BY "CameraHeadRef"
+	
+)
+;
+
+SELECT * FROM V_HIST;
 
 
 ------  COLOR
@@ -32,7 +58,7 @@ DROP VIEW V_TYPE;
 CREATE VIEW  V_TYPE AS (
 SELECT SEQ as TYPESEQ, "TypeID" FROM (	
 SELECT DISTINCT * FROM 
-(SELECT TOP 1000000 round(RAND(),4) as SEQ FROM OBJECTS ),
+(SELECT TOP 100000 round(RAND(),4) as SEQ FROM OBJECTS, objects ),
 (
 SELECT "ROWNUM", "TypeID", FREQ, SUM(FREQ) OVER (  ORDER BY "ROWNUM" ) AS FREQSEQ
 FROM (
@@ -48,6 +74,9 @@ ORDER BY SEQ
 ;
 
 SELECT * FROM V_TYPE;
+SELECT count(*) FROM V_TYPE;
+
+
 ------  MAKE
 DROP VIEW V_MAKE;
 CREATE VIEW  V_MAKE AS (
@@ -124,9 +153,11 @@ SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) 
  
  
  
- -----------------------
- 
- 
+------------------ MAIN GEN SQL
+SELECT "CameraHeadRef", EVENTTIMESTAMP,  VNP , "SpeedLimitStd", "HISTFREQ", RAND() as SPEEDRAND , 
+       ROUND(RAND(),2) as COLORRAND, ROUND(RAND(),4) as TYPERAND, ROUND(RAND()*76,0) as MAKERAND --, 'Light Vehicle' as "VTYPE"
+
+FROM (
 SELECT TO_TIMESTAMP(VDATE), VHOUR, VMIN, VSEC, add_seconds(TO_TIMESTAMP(VDATE),  3600 * VHOUR + 60 * VMIN + VSEC) AS EVENTTIMESTAMP,
      CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0)) || SUBSTRING (LPAD(TO_CHAR(round(rand() * 100,0)),2,'0'),0,2) || ' ' || CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0)) || CHAR(65 + round(rand() * 25,0))  AS VNP
 FROM 
@@ -152,8 +183,34 @@ SELECT  top 5000 V AS VTIME FROM (
 SELECT ADD_SECONDS (TO_TIMESTAMP ('2019-01-01 00:00:00'), round(rand()*59*60,0) ) AS V from OBJECTS, OBJECTS   limit 50000)
 -- order by V
  )
-)
+)  
 
 order by VDATE, VHOUR, VMIN, VSEC
+) AS PARTA,
+( SELECT "cameras.camera"."CameraHeadRef", "SpeedLimitStd" , FREQ as "HISTFREQ"
+ from "cameras.camera" 
+ INNER JOIN V_HIST
+ ON "cameras.camera"."CameraHeadRef" = V_HIST."CameraHeadRef"
+ where "CamType" = 'Speed Camera' 
+) AS CAM 
+
+
+
+-------------- NICE RANDOM
+ 
+ SELECT USER_NAME, RRID , PARTB.* FROM 
+ (
+ SELECT USER_NAME, RIDMIN, RIDMAX , ROUND(RAND() * (RIDMAX - RIDMIN),0) + RIDMIN AS RRID   FROM USERS,
+ (
+ SELECT 
+ 	(SELECT MIN(RECORD_ID( "cameras.camera")) FROM "cameras.camera" ) AS RIDMIN ,
+ 	(SELECT MAX(RECORD_ID( "cameras.camera")) FROM "cameras.camera" ) AS RIDMAX
+ 	FROM DUMMY
+ )
+ ) AS PARTA,
+ (
+  SELECT RECORD_ID( "cameras.camera") as RID, * FROM "cameras.camera"  where "CamType" = 'Speed Camera' 
+ ORDER BY RECORD_ID( "cameras.camera") ) AS PARTB
+ WHERE PARTA.RRID = PARTB.RID
 
 
