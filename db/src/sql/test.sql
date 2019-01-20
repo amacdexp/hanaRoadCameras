@@ -306,7 +306,9 @@ SELECT "ColorID", "TypeID" , "MakeID", COUNT(*) FROM TESTCREATE
 GROUP BY "ColorID", "TypeID" , "MakeID"
 
 
-
+--https://www.yorkpress.co.uk/news/15107411.police-camera-catches-1-speeder-every-9-minutes-see-2017s-hotspots-so-far/
+-- This article says 1 every 9 minutes  
+---   Speeds an hour  7   ~   1 speder 8.5 minutes
 SELECT SP, TOT, SP/TOT , SP / 500  FROM (
 select
 (SELECT count(*)  from TESTCREATE WHERE "SpeedDelta" > 0) as SP,
@@ -315,10 +317,8 @@ FROM DUMMY
 )
 ;
 
--- 1 hour 28Mb
-SELECT MEMORY_SIZE_IN_TOTAL / 1024 / 1024 as Mb , * FROM M_CS_TABLES WHERE TABLE_NAME like '%TESTCREATE%'
 
-SELECT MEMORY_SIZE_IN_TOTAL / 1024 / 1024 as Mb , * FROM M_CS_COLUMNS WHERE TABLE_NAME like '%TESTCREATE%'
+
 
 
 
